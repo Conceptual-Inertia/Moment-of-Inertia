@@ -85,10 +85,29 @@ void make_link_before(uint32_t name){
 }
 
 void fputu(uint32_t a){
-    fputc(out, a >> 24);
-    fputc(out, (a >> 16) & 255);
-    fputc(out, (a >> 8) & 255);
-    fputc(out, a & 255);
+    fputc(a >> 24, out);
+    fputc((a >> 16) & 255, out);
+    fputc((a >> 8) & 255, out);
+    fputc(a & 255, out);
+}
+
+void put_instr (uint32_t num){
+    fputc(((instrs[num].instr_num & 15) << 4) + ((instrs[num].tpar[0] == '#'? 2: (instrs[num].tpar[0] == 'R' ? 1 : 0)) << 2)
+          +((instrs[num].tpar[1] == '#'? 2: (instrs[num].tpar[1] == 'R' ? 1 : 0))), out);
+    fputc(((instrs[num].tpar[0] == '#'? 2: (instrs[num].tpar[0] == 'R' ? 1 : 0)) << 6) +
+                  (((instrs[num].tpar[0] == 'R'? instrs[num].par[0]:0) & 3) << 4) +
+                  (((instrs[num].tpar[1] == 'R'? instrs[num].par[1]:0) & 3) << 2) +
+                  (((instrs[num].tpar[2] == 'R'? instrs[num].par[0]:0) & 3)), out);
+    fputc((instrs[num].tpar[0] == '@'? instrs[num].par[0]:0) >> 8, out);
+    fputc((instrs[num].tpar[0] == '@'? instrs[num].par[0]:0), out);
+    fputc((instrs[num].tpar[1] == '@'? instrs[num].par[1]:0) >> 8, out);
+    fputc((instrs[num].tpar[1] == '@'? instrs[num].par[1]:0), out);
+    fputc((instrs[num].tpar[2] == '@'? instrs[num].par[2]:0) >> 8, out);
+    fputc((instrs[num].tpar[2] == '@'? instrs[num].par[2]:0), out);
+    if (instrs[num].tpar[0] == '#')fputu(instrs[num].par[0]);
+    if (instrs[num].tpar[1] == '#')fputu(instrs[num].par[1]);
+    if (instrs[num].tpar[2] == '#')fputu(instrs[num].par[2]);
+
 }
 int main(int argc, char *argc[]) {
     instrs = (instr_set *)malloc(len_instrs * sizeof(instr_set));
