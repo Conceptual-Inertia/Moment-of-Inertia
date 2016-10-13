@@ -207,8 +207,17 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
+
+
     in = fopen(argv[1], "r");
     out = fopen(argv[2], "wb");
+
+    while (decode_line() != EOF){};
+
+    fputu(bytes_written);
+    for (uint32_t i = 0; i < used_instrs; i ++){
+        put_instr(i);
+    }
 
     fclose(in);
     fclose(out);
