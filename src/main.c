@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <stdint.h>
 
 #define INERTIA_ADD 0x0 // Addition
 #define INERTIA_DIV 0x1 // Division
@@ -46,7 +47,7 @@ uint32_t len_links = 1024;
 uint32_t used_links;
 go_links *links;
 
-void new_instr(uint32_t instr_num, char tpar1, uint32_t par1, char tpar2, uint32_t par2, char tpar3, uint32_t par3){
+void new_instr(uint32_t instr_num, char tpar[3], uint32_t par[3]){
     if (len_instrs == used_instrs){
         len_instrs <<= 1;
         instrs = (instr_set *)realloc(instrs, len_instrs * sizeof(instr_set));
@@ -57,13 +58,13 @@ void new_instr(uint32_t instr_num, char tpar1, uint32_t par1, char tpar2, uint32
     }
 
     instrs[used_instrs].instr_num = instr_num;
-    instrs[used_instrs].tpar[0] = tpar1;
-    instrs[used_instrs].tpar[1] = tpar2;
-    instrs[used_instrs].tpar[2] = tpar3;
-    instrs[used_instrs].par[0] = par1;
-    instrs[used_instrs].par[1] = par2;
-    instrs[used_instrs].par[2] = par3;
-    bytes_written += (2 + (tpar1 == '#') + (tpar2 == '#') + (tpar3 == '#'));
+    instrs[used_instrs].tpar[0] = tpar[0];
+    instrs[used_instrs].tpar[1] = tpar[1];
+    instrs[used_instrs].tpar[2] = tpar[2];
+    instrs[used_instrs].par[0] = par[0];
+    instrs[used_instrs].par[1] = par[1];
+    instrs[used_instrs].par[2] = par[2];
+    bytes_written += (2 + (tpar[0] == '#') + (tpar[1] == '#') + (tpar[2] == '#'));
     used_instrs ++;
 }
 
@@ -112,21 +113,44 @@ void put_instr (uint32_t num){
 
 }
 
-void decodeLine(){
+void decode_add(char *tpar, uint32_t *par, uint32_t n){
+    char c;
+    uint32_t t;
+    fscanf(in, "%c%u", &c,&t);
+    c = toupper(c);
+    if (c == 'P'){
+        if (t >= len_links + 1) {//not used before
+            new_link(used_instrs, n);
+            *par = 0;
+            *tpar = '#';
+        }
+        else{//used before
+            *par = links[t + 2].instr_num;
+            if (links[t + 2].par != 0) printf("Warning: goto link incorrect");
+            *tpar = '#';
+        }
+    }
+    else {
+        *tpar = c;
+        *par = t;
+    }
+}
+
+int decode_line(){
     char buff[15];
     char sub[15];
     uint32_t name;
-    fscanf(in, "%s", buff);
+    if (fscanf(in, "%s", buff) == EOF) return EOF;
     for (int i = 0;buff[i]; i++){//capitalize
-        buff[i] = putchar(buff[i]);
+        buff[i] = toupper(buff[i]);
     }
-    if (toupper(buff[0]) == 'P' && toupper(buff[1]) != 'R') {//goto link
+    if (buff[0] == 'P' && buff[1] != 'R') {//goto link
         memcpy(sub, &buff[1], strlen(buff) - 2);
         name = (uint32_t) atoi(sub);
         if (name >= len_links + 1)//not used before
             new_link(bytes_written, 0);//place now
         else make_link_before(name);
-        return;
+        return 1;
     }
 
     //name used as instr
@@ -147,9 +171,34 @@ void decodeLine(){
     if (strcmp(buff, "RETURN")) name = INERTIA_RETURN;
     if (strcmp(buff, "CALL")) name = INERTIA_CALL;
 
+    char tpar[3] = {'@', '@', '@'};
+    uint32_t par[3] = {0, 0, 0};
 
+    int times;
+    switch (name){
+        case 0 ... 5: // three par
+        case 7 ... 9:
+            decode_add(&tpar[0], &par[0], 1);
+            decode_add(&tpar[1], &par[1], 2);
+            decode_add(&tpar[2], &par[2], 3);
+            break;
+        case 6: //two par
+        case 11:
+        case 13:
+            decode_add(&tpar[0], &par[0], 1);
+            decode_add(&tpar[1], &par[1], 2);
+            break;
+        case 10://one par
+        case 12:
+        case 15:
+            decode_add(&tpar[0], &par[0], 1);
+            break;
+        //no par, do nothing
+    }
 
+    new_instr(name, tpar, par);
 
+    return 1;
 }
 
 int main(int argc, char *argv[]) {
@@ -161,8 +210,26 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
+
+
     in = fopen(argv[1], "r");
     out = fopen(argv[2], "wb");
+    if ((!in) || (!out)){
+        printf("Failed to read file\n");
+        if (out) {
+            fclose(out);
+            remove(argv[2]);
+        }
+        return 1;
+    }
+
+
+    while (decode_line() != EOF){};
+
+    fputu(bytes_written);
+    for (uint32_t i = 0; i < used_instrs; i ++){
+        put_instr(i);
+    }
 
     fclose(in);
     fclose(out);
