@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <stdint.h>
 
 #define INERTIA_ADD 0x0 // Addition
 #define INERTIA_DIV 0x1 // Division
@@ -114,7 +115,7 @@ void put_instr (uint32_t num){
 
 void decode_add(char *tpar, uint32_t *par, uint32_t n){
     char c;
-    uint_32_t t;
+    uint32_t t;
     fscanf(in, "%c%u", &c,&t);
     c = toupper(c);
     if (c == 'P'){
@@ -122,8 +123,8 @@ void decode_add(char *tpar, uint32_t *par, uint32_t n){
             new_link(used_instrs, n);
         }
         else{//used before
-            *par = links[name + 2].instr_num;
-            if (links[name + 2].par != 0) printf("Warning: goto link incorrect");
+            *par = links[t + 2].instr_num;
+            if (links[t + 2].par != 0) printf("Warning: goto link incorrect");
             *tpar = '#';
         }
     }
@@ -147,7 +148,7 @@ int decode_line(){
         if (name >= len_links + 1)//not used before
             new_link(bytes_written, 0);//place now
         else make_link_before(name);
-        return;
+        return 1;
     }
 
     //name used as instr
@@ -190,7 +191,7 @@ int decode_line(){
         case 15:
             decode_add(&tpar[0], &par[0], 1);
             break;
-        default: //no par
+        //no par, do nothing
     }
 
     new_instr(name, tpar, par);
