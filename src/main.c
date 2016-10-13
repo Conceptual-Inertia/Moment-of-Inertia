@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
 
 #define INERTIA_ADD 0x0 // Addition
 #define INERTIA_DIV 0x1 // Division
@@ -66,7 +68,7 @@ void new_instr(uint32_t instr_num, char tpar1, uint32_t par1, char tpar2, uint32
 }
 
 void new_link(uint32_t instr_num, uint32_t par){
-    if (len_links == used_links){
+    if (len_links + 2== used_links){
         len_links <<= 1;
         links = (go_links *)realloc(links, len_links * sizeof(go_links));
         if (!links){
@@ -81,7 +83,7 @@ void new_link(uint32_t instr_num, uint32_t par){
 }
 
 void make_link_before(uint32_t name){
-    instrs[links[name + 2].instr_num].par[links[name + 2].par - 1] = bytes_written;
+    instrs[links[name + 1].instr_num].par[links[name + 1].par - 1] = bytes_written;
 }
 
 void fputu(uint32_t a){
@@ -109,7 +111,49 @@ void put_instr (uint32_t num){
     if (instrs[num].tpar[2] == '#')fputu(instrs[num].par[2]);
 
 }
-int main(int argc, char *argc[]) {
+
+void decodeLine(){
+    char buff[15];
+    char sub[15];
+    uint32_t name;
+    fscanf(in, "%s", buff);
+    for (int i = 0;buff[i]; i++){//capitalize
+        buff[i] = putchar(buff[i]);
+    }
+    if (toupper(buff[0]) == 'P' && toupper(buff[1]) != 'R') {//goto link
+        memcpy(sub, &buff[1], strlen(buff) - 2);
+        name = (uint32_t) atoi(sub);
+        if (name >= len_links + 1)//not used before
+            new_link(bytes_written, 0);//place now
+        else make_link_before(name);
+        return;
+    }
+
+    //name used as instr
+    if (strcmp(buff, "ADD")) name = INERTIA_ADD;
+    if (strcmp(buff, "DIV")) name = INERTIA_DIV;
+    if (strcmp(buff, "MUL")) name = INERTIA_MUL;
+    if (strcmp(buff, "LTN")) name = INERTIA_LTN;
+    if (strcmp(buff, "EQL")) name = INERTIA_EQL;
+    if (strcmp(buff, "AND")) name = INERTIA_AND;
+    if (strcmp(buff, "NOT")) name = INERTIA_NOT;
+    if (strcmp(buff, "OR")) name = INERTIA_OR;
+    if (strcmp(buff, "SHIFTL")) name = INERTIA_SHIFTL;
+    if (strcmp(buff, "SHIFTR")) name = INERTIA_SHIFTR;
+    if (strcmp(buff, "PRINT")) name = INERTIA_PRINT;
+    if (strcmp(buff, "LOAD")) name = INERTIA_LOAD;
+    if (strcmp(buff, "GOTO")) name = INERTIA_GOTO;
+    if (strcmp(buff, "IF")) name = INERTIA_IF;
+    if (strcmp(buff, "RETURN")) name = INERTIA_RETURN;
+    if (strcmp(buff, "CALL")) name = INERTIA_CALL;
+
+
+
+
+}
+
+int main(int argc, char *argv[]) {
+
     instrs = (instr_set *)malloc(len_instrs * sizeof(instr_set));
     links = (go_links *)malloc(len_links * sizeof(go_links));
     if ((!instrs) || (!links)){
@@ -117,8 +161,11 @@ int main(int argc, char *argc[]) {
         return 1;
     }
 
+    in = fopen(argv[1], "r");
+    out = fopen(argv[2], "wb");
 
-
+    fclose(in);
+    fclose(out);
     free(instrs);
     free(links);
     return 0;
