@@ -121,6 +121,8 @@ void decode_add(char *tpar, uint32_t *par, uint32_t n){
     if (c == 'P'){
         if (t >= len_links + 1) {//not used before
             new_link(used_instrs, n);
+            *par = 0;
+            *tpar = '#';
         }
         else{//used before
             *par = links[t + 2].instr_num;
@@ -212,6 +214,15 @@ int main(int argc, char *argv[]) {
 
     in = fopen(argv[1], "r");
     out = fopen(argv[2], "wb");
+    if ((!in) || (!out)){
+        printf("Failed to read file\n");
+        if (out) {
+            fclose(out);
+            remove(argv[2]);
+        }
+        return 1;
+    }
+
 
     while (decode_line() != EOF){};
 
