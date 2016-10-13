@@ -84,10 +84,12 @@ void make_link_before(uint32_t name){
     instrs[links[name + 2].instr_num].par[links[name + 2].par - 1] = bytes_written;
 }
 
-void make_link_after(uint32_t name){
-
+void fputu(uint32_t a){
+    fputc(out, a >> 24);
+    fputc(out, (a >> 16) & 255);
+    fputc(out, (a >> 8) & 255);
+    fputc(out, a & 255);
 }
-
 int main(int argc, char *argc[]) {
     instrs = (instr_set *)malloc(len_instrs * sizeof(instr_set));
     links = (go_links *)malloc(len_links * sizeof(go_links));
