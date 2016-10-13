@@ -76,6 +76,9 @@ void new_link(uint32_t instr_num, uint32_t par){
             printf("Failed to allocate\n");
             exit(1);
         }
+        links[used_links].instr_num = instr_num;
+        links[used_links].par = par;
+        used_links ++;
     }
 
     links[used_links].instr_num = instr_num;
@@ -88,7 +91,7 @@ void make_link_before(uint32_t name){
 }
 
 void fputu(uint32_t a){
-    fputc(a >> 24, out);
+    fputc(a >> 24), out);
     fputc((a >> 16) & 255, out);
     fputc((a >> 8) & 255, out);
     fputc(a & 255, out);
@@ -100,7 +103,7 @@ void put_instr (uint32_t num){
     fputc(((instrs[num].tpar[2] == '#'? 2: (instrs[num].tpar[2] == 'R' ? 1 : 0)) << 6) +
                   (((instrs[num].tpar[0] == 'R'? instrs[num].par[0]:0) & 3) << 4) +
                   (((instrs[num].tpar[1] == 'R'? instrs[num].par[1]:0) & 3) << 2) +
-                  (((instrs[num].tpar[2] == 'R'? instrs[num].par[0]:0) & 3)), out);
+                  (((instrs[num].tpar[2] == 'R'? instrs[num].par[2]:0) & 3)), out);
     fputc((instrs[num].tpar[0] == '@'? instrs[num].par[0]:0) >> 8, out);
     fputc((instrs[num].tpar[0] == '@'? instrs[num].par[0]:0), out);
     fputc((instrs[num].tpar[1] == '@'? instrs[num].par[1]:0) >> 8, out);
@@ -118,18 +121,18 @@ void put_instr (uint32_t num){
 void decode_add(char *tpar, uint32_t *par, uint32_t n){
     char c;
     uint32_t t;
-    fscanf(in, " %c%u", &c,&t);
+    if (fscanf(in, " %c%u", &c,&t) == EOF) return;
     printf("READADD: %c %u\n", c,t);
     c = toupper(c);
     if (c == 'P'){
-        if (t > ((int32_t)used_links) - 1) {//not used before
+        if (t > ((int32_t)used_links)) {//not used before
             new_link(used_instrs, n);
             *par = 0;
             *tpar = '#';
         }
         else{//used before
-            *par = links[t].instr_num;
-            if (links[t + 2].par != 0) printf("Warning: goto link incorrect");
+            *par = links[t - 1].instr_num;
+            if (links[t].par != 0) printf("Warning: goto link incorrect");
             *tpar = '#';
         }
     }
@@ -148,16 +151,15 @@ int decode_line(){
     for (int i = 0;buff[i]; i++){//capitalize
         buff[i] = toupper(buff[i]);
     }
-    if (buff[0] >= 48 && buff[0] <= 48 + 9) {//goto link
+    if (buff[0] >= '0' && buff[0] <= '9') {//goto link
         name = atoi(buff);
         printf("name: %u", name);
-        if (name > ((int32_t)used_links) - 1) {//not used before
+        if (name > ((int32_t)used_links)) {//not used before
             new_link(bytes_written, 0);//place now
         }
         else {
             make_link_before(name);
         }
-        printf("leave");
         return 1;
     }
 
@@ -220,7 +222,7 @@ int main(int argc, char *argv[]) {
 
 
 
-    in = fopen(argv[1], "rb");
+    in = fopen(argv[1], "r");
     out = fopen(argv[2], "wb");
     if ((!in) || (!out)){
         printf("Failed to read file\n");
