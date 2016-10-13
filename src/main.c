@@ -69,7 +69,7 @@ void new_instr(uint32_t instr_num, char tpar[3], uint32_t par[3]){
 }
 
 void new_link(uint32_t instr_num, uint32_t par){
-    if (len_links + 2== used_links){
+    if (len_links == used_links){
         len_links <<= 1;
         links = (go_links *)realloc(links, len_links * sizeof(go_links));
         if (!links){
@@ -84,7 +84,7 @@ void new_link(uint32_t instr_num, uint32_t par){
 }
 
 void make_link_before(uint32_t name){
-    instrs[links[name + 1].instr_num].par[links[name + 1].par - 1] = bytes_written;
+    instrs[links[name - 1].instr_num].par[links[name - 1].par - 1] = bytes_written;
 }
 
 void fputu(uint32_t a){
@@ -97,7 +97,7 @@ void fputu(uint32_t a){
 void put_instr (uint32_t num){
     fputc(((instrs[num].instr_num & 15) << 4) + ((instrs[num].tpar[0] == '#'? 2: (instrs[num].tpar[0] == 'R' ? 1 : 0)) << 2)
           +((instrs[num].tpar[1] == '#'? 2: (instrs[num].tpar[1] == 'R' ? 1 : 0))), out);
-    fputc(((instrs[num].tpar[0] == '#'? 2: (instrs[num].tpar[0] == 'R' ? 1 : 0)) << 6) +
+    fputc(((instrs[num].tpar[2] == '#'? 2: (instrs[num].tpar[2] == 'R' ? 1 : 0)) << 6) +
                   (((instrs[num].tpar[0] == 'R'? instrs[num].par[0]:0) & 3) << 4) +
                   (((instrs[num].tpar[1] == 'R'? instrs[num].par[1]:0) & 3) << 2) +
                   (((instrs[num].tpar[2] == 'R'? instrs[num].par[0]:0) & 3)), out);
@@ -110,22 +110,25 @@ void put_instr (uint32_t num){
     if (instrs[num].tpar[0] == '#')fputu(instrs[num].par[0]);
     if (instrs[num].tpar[1] == '#')fputu(instrs[num].par[1]);
     if (instrs[num].tpar[2] == '#')fputu(instrs[num].par[2]);
+    
+    printf("%d, %d %c%d %c%d %c%d\n", num, instrs[num].instr_num, instrs[num].tpar[0], instrs[num].par[0], instrs[num].tpar[1], instrs[num].par[1], instrs[num].tpar[2], instrs[num].par[2]);
 
 }
 
 void decode_add(char *tpar, uint32_t *par, uint32_t n){
     char c;
     uint32_t t;
-    fscanf(in, "%c%u", &c,&t);
+    fscanf(in, " %c%u", &c,&t);
+    printf("READADD: %c %u\n", c,t);
     c = toupper(c);
     if (c == 'P'){
-        if (t >= len_links + 1) {//not used before
+        if (t > ((int32_t)used_links) - 1) {//not used before
             new_link(used_instrs, n);
             *par = 0;
             *tpar = '#';
         }
         else{//used before
-            *par = links[t + 2].instr_num;
+            *par = links[t].instr_num;
             if (links[t + 2].par != 0) printf("Warning: goto link incorrect");
             *tpar = '#';
         }
@@ -138,38 +141,43 @@ void decode_add(char *tpar, uint32_t *par, uint32_t n){
 
 int decode_line(){
     char buff[15];
-    char sub[15];
-    uint32_t name;
+    uint32_t name = 0;
     if (fscanf(in, "%s", buff) == EOF) return EOF;
+    printf("READ: %s\n", buff);
+
     for (int i = 0;buff[i]; i++){//capitalize
         buff[i] = toupper(buff[i]);
     }
-    if (buff[0] == 'P' && buff[1] != 'R') {//goto link
-        memcpy(sub, &buff[1], strlen(buff) - 2);
-        name = (uint32_t) atoi(sub);
-        if (name >= len_links + 1)//not used before
+    if (buff[0] >= 48 && buff[0] <= 48 + 9) {//goto link
+        name = atoi(buff);
+        printf("name: %u", name);
+        if (name > ((int32_t)used_links) - 1) {//not used before
             new_link(bytes_written, 0);//place now
-        else make_link_before(name);
+        }
+        else {
+            make_link_before(name);
+        }
+        printf("leave");
         return 1;
     }
 
     //name used as instr
-    if (strcmp(buff, "ADD")) name = INERTIA_ADD;
-    if (strcmp(buff, "DIV")) name = INERTIA_DIV;
-    if (strcmp(buff, "MUL")) name = INERTIA_MUL;
-    if (strcmp(buff, "LTN")) name = INERTIA_LTN;
-    if (strcmp(buff, "EQL")) name = INERTIA_EQL;
-    if (strcmp(buff, "AND")) name = INERTIA_AND;
-    if (strcmp(buff, "NOT")) name = INERTIA_NOT;
-    if (strcmp(buff, "OR")) name = INERTIA_OR;
-    if (strcmp(buff, "SHIFTL")) name = INERTIA_SHIFTL;
-    if (strcmp(buff, "SHIFTR")) name = INERTIA_SHIFTR;
-    if (strcmp(buff, "PRINT")) name = INERTIA_PRINT;
-    if (strcmp(buff, "LOAD")) name = INERTIA_LOAD;
-    if (strcmp(buff, "GOTO")) name = INERTIA_GOTO;
-    if (strcmp(buff, "IF")) name = INERTIA_IF;
-    if (strcmp(buff, "RETURN")) name = INERTIA_RETURN;
-    if (strcmp(buff, "CALL")) name = INERTIA_CALL;
+    if (!strcmp(buff, "ADD")) name = INERTIA_ADD;
+    if (!strcmp(buff, "DIV")) name = INERTIA_DIV;
+    if (!strcmp(buff, "MUL")) name = INERTIA_MUL;
+    if (!strcmp(buff, "LTN")) name = INERTIA_LTN;
+    if (!strcmp(buff, "EQL")) name = INERTIA_EQL;
+    if (!strcmp(buff, "AND")) name = INERTIA_AND;
+    if (!strcmp(buff, "NOT")) name = INERTIA_NOT;
+    if (!strcmp(buff, "OR")) name = INERTIA_OR;
+    if (!strcmp(buff, "SHIFTL")) name = INERTIA_SHIFTL;
+    if (!strcmp(buff, "SHIFTR")) name = INERTIA_SHIFTR;
+    if (!strcmp(buff, "PRINT")) name = INERTIA_PRINT;
+    if (!strcmp(buff, "LOAD")) name = INERTIA_LOAD;
+    if (!strcmp(buff, "GOTO")) name = INERTIA_GOTO;
+    if (!strcmp(buff, "IF")) name = INERTIA_IF;
+    if (!strcmp(buff, "RETURN")) name = INERTIA_RETURN;
+    if (!strcmp(buff, "CALL")) name = INERTIA_CALL;
 
     char tpar[3] = {'@', '@', '@'};
     uint32_t par[3] = {0, 0, 0};
@@ -212,7 +220,7 @@ int main(int argc, char *argv[]) {
 
 
 
-    in = fopen(argv[1], "r");
+    in = fopen(argv[1], "rb");
     out = fopen(argv[2], "wb");
     if ((!in) || (!out)){
         printf("Failed to read file\n");
