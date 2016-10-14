@@ -12,9 +12,9 @@
 #define INERTIA_EQL 0x4 // Equal To
 #define INERTIA_AND 0x5 // Bitwise AND
 #define INERTIA_NOT 0x6 // Bitwise NOT
-#define INERTIA_OR 0x7 //  Bitwise OR
-#define INERTIA_SHIFTL 0x8 //Bitwise SHIFTL
-#define INERTIA_SHIFTR 0x9 //Bitwise SHIFTR
+#define INERTIA_OR 0x7  // Bitwise OR
+#define INERTIA_INC 0x8 // Increase by 1
+#define INERTIA_DEC 0x9 // Decrease by 1
 
 #define INERTIA_PRINT 0xA // Print to stdout
 #define INERTIA_LOAD 0xB // Load value
@@ -172,8 +172,8 @@ int decode_line(){
     if (!strcmp(buff, "AND")) name = INERTIA_AND;
     if (!strcmp(buff, "NOT")) name = INERTIA_NOT;
     if (!strcmp(buff, "OR")) name = INERTIA_OR;
-    if (!strcmp(buff, "SHIFTL")) name = INERTIA_SHIFTL;
-    if (!strcmp(buff, "SHIFTR")) name = INERTIA_SHIFTR;
+    if (!strcmp(buff, "INC")) name = INERTIA_INC;
+    if (!strcmp(buff, "DEC")) name = INERTIA_DEC;
     if (!strcmp(buff, "PRINT")) name = INERTIA_PRINT;
     if (!strcmp(buff, "LOAD")) name = INERTIA_LOAD;
     if (!strcmp(buff, "GOTO")) name = INERTIA_GOTO;
@@ -187,7 +187,7 @@ int decode_line(){
     int times;
     switch (name){
         case 0 ... 5: // three par
-        case 7 ... 9:
+        case 7:
             decode_add(&tpar[0], &par[0], 1);
             decode_add(&tpar[1], &par[1], 2);
             decode_add(&tpar[2], &par[2], 3);
@@ -198,7 +198,7 @@ int decode_line(){
             decode_add(&tpar[0], &par[0], 1);
             decode_add(&tpar[1], &par[1], 2);
             break;
-        case 10://one par
+        case 8 ... 10://one par
         case 12:
         case 15:
             decode_add(&tpar[0], &par[0], 1);
