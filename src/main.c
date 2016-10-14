@@ -91,7 +91,7 @@ void make_link_before(uint32_t name){
 }
 
 void fputu(uint32_t a){
-    fputc(a >> 24), out);
+    fputc((a >> 24), out);
     fputc((a >> 16) & 255, out);
     fputc((a >> 8) & 255, out);
     fputc(a & 255, out);
