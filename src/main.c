@@ -114,7 +114,7 @@ void put_instr (uint32_t num){
     if (instrs[num].tpar[1] == '#')fputu(instrs[num].par[1]);
     if (instrs[num].tpar[2] == '#')fputu(instrs[num].par[2]);
     
-    printf("%d, %d %c%d %c%d %c%d\n", num, instrs[num].instr_num, instrs[num].tpar[0], instrs[num].par[0], instrs[num].tpar[1], instrs[num].par[1], instrs[num].tpar[2], instrs[num].par[2]);
+    //printf("%d, %d %c%d %c%d %c%d\n", num, instrs[num].instr_num, instrs[num].tpar[0], instrs[num].par[0], instrs[num].tpar[1], instrs[num].par[1], instrs[num].tpar[2], instrs[num].par[2]);
 
 }
 
@@ -122,7 +122,7 @@ void decode_add(char *tpar, uint32_t *par, uint32_t n){
     char c;
     uint32_t t;
     if (fscanf(in, " %c%u", &c,&t) == EOF) return;
-    printf("READADD: %c %u\n", c,t);
+    //printf("READADD: %c %u\n", c,t);
     c = toupper(c);
     if (c == 'P'){
         if (t > ((int32_t)used_links)) {//not used before
@@ -132,7 +132,7 @@ void decode_add(char *tpar, uint32_t *par, uint32_t n){
         }
         else{//used before
             *par = links[t - 1].instr_num;
-            if (links[t].par != 0) printf("Warning: goto link incorrect");
+            if (links[t - 1].par != 0) printf("Warning: goto link incorrect\n");
             *tpar = '#';
         }
     }
@@ -146,14 +146,14 @@ int decode_line(){
     char buff[15];
     uint32_t name = 0;
     if (fscanf(in, "%s", buff) == EOF) return EOF;
-    printf("READ: %s\n", buff);
+    //printf("READ: %s\n", buff);
 
     for (int i = 0;buff[i]; i++){//capitalize
         buff[i] = toupper(buff[i]);
     }
     if (buff[0] >= '0' && buff[0] <= '9') {//goto link
         name = atoi(buff);
-        printf("name: %u", name);
+        //printf("name: %u\n", name);
         if (name > ((int32_t)used_links)) {//not used before
             new_link(bytes_written, 0);//place now
         }
