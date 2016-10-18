@@ -1,1 +1,45 @@
 
+Created by Tyler Liu on 2016/09/23.
+Copyright © 2016 Tyler Liu. All rights reserved.
+
+PUBLISHED UNDER THE GNU GENERAL PUBLIC LICENSE v3.0.
+
+WRITTEN IN POLISH NOTATION: 
+INSTRUCTION TYPE FIRST, THREE PARAMETER (OPTIONAL) AFTER, SEPARATED BY SPACE
+INSTRUCTIONS SEPARATED BY LINES
+
+INSTRUCTIONS:
+add		|add value and assign
+div		|division value and assign 
+mul		|multiple value and assign 
+ltn		|return true if value second less than third argument 
+eql		|return true if value second equal to third argument
+and		|assign bitwise and
+not		|assign bitwise not
+or		|assign bitwise or
+inc		|increase value by 1
+dec		|decrease value by 1
+print		|print argument
+load		|assign second argument to 1
+goto		|goto statement
+if		|if first argument false goto the statement
+return 		|return function
+call		|call a function start at the argument
+
+PARAMETER TYPE:
+@ memory address
+R register address
+# number
+P goto label
+* pointer of memory address from register
+
+GOTO LABEL:
+The goto labels are labeled by numbers, starts at 1.
+Goto label used in argument format:
+
+P <LABEL>
+
+labeling in code:
+
+<LABEL>:
+
